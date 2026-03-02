@@ -186,14 +186,18 @@ class SuperAdminController extends Controller
         ));
     }
 
-    public function pharmacie()
-    {
-        $pharmacies = Pharmacie::with('users','ordonances')->orderByDesc('created_at')->paginate(10);
+public function pharmacie()
+{
+    $pharmacies = Pharmacie::withCount(['ordonances', 'ordonances as ordonances_processed_count' => function($q) {
+            $q->where('status', 'processed');
+        }])
+        ->orderByDesc('created_at')
+        ->paginate(10);
 
-        return Inertia::render('Administration/Dashboard/Phamacie/index', [
-            'pharmacies' => $pharmacies
-        ]);
-    }
+    return Inertia::render('Administration/Dashboard/Pharmacie/index', [
+        'pharmacies' => $pharmacies,
+    ]);
+}
     public function ordonnance()
     {
         $ordonnance = ordonance::with('user', 'pharmacie')->paginate(10);
@@ -419,14 +423,7 @@ class SuperAdminController extends Controller
         return redirect()->back()->with('success', 'L’utilisateur a été débloqué avec succès.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(User $user)
-    {
-        $user->delete();
-        return redirect()->back()->with('success', 'L’utilisateur a été supprimé avec succès.');
-    }
+
     public function rejected(Ordonance $ordonance)
     {
         if ($ordonance->status === 'rejected') {
@@ -503,5 +500,87 @@ class SuperAdminController extends Controller
         //     $userOrdn->notify(new PharmacieMailSmsNotification($pharmacie, $userOrdn));
         // }
         return redirect()->back()->with('success', 'L\'ordonnance a été relancée avec succès !');
+    }
+
+     public function updateStatut(Request $request)
+    {
+        $request->validate([
+            'id'     => ['required', 'integer', 'exists:pharmacies,id'],
+            'statut' => ['required', 'in:active,inactive'],
+        ]);
+
+        $pharmacie = Pharmacie::findOrFail($request->id);
+
+        // Impossible de modifier une pharmacie bloquée
+        if ($pharmacie->is_blocked) {
+            return back()->withErrors(['statut' => 'Cette pharmacie est bloquée. Débloquez-la d\'abord.']);
+        }
+
+        $pharmacie->update([
+            'statut'        => $request->statut,
+            // Si on désactive, on ferme aussi automatiquement
+            'disponibilite' => $request->statut === 'inactive' ? 'closed' : $pharmacie->disponibilite,
+        ]);
+
+        return back();
+    }
+
+    // ── Changer la disponibilité (open / closed) ───────────────────────────
+    public function updateDisponibilite(Request $request)
+    {
+        $request->validate([
+            'id'            => ['required', 'integer', 'exists:pharmacies,id'],
+            'disponibilite' => ['required', 'in:open,closed'],
+        ]);
+
+        $pharmacie = Pharmacie::findOrFail($request->id);
+
+        if ($pharmacie->is_blocked) {
+            return back()->withErrors(['disponibilite' => 'Cette pharmacie est bloquée.']);
+        }
+
+        if ($pharmacie->statut !== 'active') {
+            return back()->withErrors(['disponibilite' => 'Activez la pharmacie avant de changer sa disponibilité.']);
+        }
+
+        $pharmacie->update(['disponibilite' => $request->disponibilite]);
+
+        return back();
+    }
+
+    // ── Bloquer / Débloquer ────────────────────────────────────────────────
+    public function toggleBlock(Request $request)
+    {
+        $request->validate([
+            'id'         => ['required', 'integer', 'exists:pharmacies,id'],
+            'is_blocked' => ['required', 'boolean'],
+        ]);
+
+        $pharmacie = Pharmacie::findOrFail($request->id);
+
+        $pharmacie->update([
+            'is_blocked'    => $request->is_blocked,
+            // Quand on bloque : fermer et désactiver automatiquement
+            'statut'        => $request->is_blocked ? 'inactive'  : $pharmacie->statut,
+            'disponibilite' => $request->is_blocked ? 'closed'    : $pharmacie->disponibilite,
+        ]);
+
+        return back();
+    }
+
+    // ── Supprimer ──────────────────────────────────────────────────────────
+    public function destroy(Pharmacie $pharmacie)
+    {
+        // Supprimer le logo et l'image si présents
+        if ($pharmacie->logo) {
+        Storage::disk('public')->delete($pharmacie->logo);
+        }
+        if ($pharmacie->image) {
+            Storage::disk('public')->delete($pharmacie->image);
+        }
+
+        $pharmacie->delete();
+
+        return back();
     }
 }

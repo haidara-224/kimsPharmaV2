@@ -75,6 +75,12 @@ Route::middleware('auth','role:super admin','checkblocked')->prefix('dashboard')
     Route::post('/Administration/Dashboard/invite/', [SuperAdminController::class, 'envoyer'])->name('user.Envoyer');
     Route::put('/Administration/Dashboard/ordonnance/rejected/{ordonance}',[SuperAdminController::class,'rejected'])->name('ordonance.rejected');
     Route::put('/Administration/Dashboard/ordonnance/comment/{ordonance}',[SuperAdminController::class,'comment'])->name('ordonance.comment');
+
+   
+    Route::post('/Administration/Dashboard/pharmacies/status',          [SuperAdminController::class, 'updateStatut'])->name('pharmacies.status');
+    Route::post('/Administration/Dashboard/pharmacies/disponibilite',   [SuperAdminController::class, 'updateDisponibilite'])->name('pharmacies.disponibilite');
+    Route::post('/Administration/Dashboard/pharmacies/block',           [SuperAdminController::class, 'toggleBlock'])->name('pharmacies.block');
+    Route::delete('/Administration/Dashboard/pharmacies/{pharmacie}',   [SuperAdminController::class, 'destroy'])->name('pharmacies.destroy');
 });
 
 require __DIR__.'/settings.php';

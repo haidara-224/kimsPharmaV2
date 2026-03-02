@@ -102,7 +102,7 @@ export default function Dashboard(props: DashboardProps) {
     <AppLayout>
       <Head title="Dashboard Administration" />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         <div className="container mx-auto px-4 py-8 space-y-8">
 
           <WelcomeHeader />

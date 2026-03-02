@@ -6,6 +6,7 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
 @custom-variant dark (&:is(.dark *));
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 
 @theme {
     --font-sans:
@@ -132,6 +133,33 @@
     --sidebar-ring: oklch(0.439 0 0);
 }
 
+.leaflet-container {
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  min-width: 200px;
+}
+
+.leaflet-container a {
+  color: hsl(var(--primary));
+}
+
+/* Animation pour les marqueurs */
+.leaflet-marker-icon {
+  transition: transform 0.2s;
+}
+
+.leaflet-marker-icon:hover {
+  transform: scale(1.2);
+  z-index: 1000 !important;
+}
 @layer base {
     * {
         @apply border-border;
