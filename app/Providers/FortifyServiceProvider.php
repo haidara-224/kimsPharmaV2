@@ -20,7 +20,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind custom Fortify login response to redirect users based on roles
+        $this->app->singleton(\Laravel\Fortify\Contracts\LoginResponse::class, \App\Actions\Fortify\LoginResponse::class);
     }
 
     /**

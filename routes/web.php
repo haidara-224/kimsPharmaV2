@@ -45,7 +45,7 @@ Route::middleware('auth', 'checkblocked','pharmacieIsBlocked')->name('dashboard.
     Route::put('/paramettrage/{pharmacie}/update-status', [PharmacieController::class, 'updateStatus'])->middleware('role:admin')->name('phamacie.updateStatus');
     Route::put('/paramettrage/{pharmacie}/update-disponibilite', [PharmacieController::class, 'updateDisponibilite'])->middleware('role:admin')->name('phamacie.updateDisponibilite');
 
-    // update roles for a given user (sent from TeamManagement modal)
+
     Route::post('/users/{user}/roles', [PharmacieController::class, 'updateUserRoles'])
         ->middleware('role:admin')
         ->name('users.updateRoles');
@@ -54,27 +54,27 @@ Route::middleware('auth', 'checkblocked','pharmacieIsBlocked')->name('dashboard.
 
 });
 Route::middleware('auth','role:super admin','checkblocked')->prefix('dashboard')->name('superAdmin.')->group(function(){
-    Route::get('/super-admin',[SuperAdminController::class,'index'])->name('home');
-    Route::get('/super-admin/pharmacies',[SuperAdminController::class,'pharmacie'])->name('pharmacie');
-    Route::get('/super-admin/ordonnances',[SuperAdminController::class,'ordonnance'])->name('ordonnance');
-    Route::put('/super-admin/ordonance/rejected/{ordonance}',[SuperAdminController::class,'Ordonancerejected'])->name('ordonance.rejected');
-    Route::put('/super-admin/ordonance/comment/{ordonance}',[SuperAdminController::class,'Ordonancecomment'])->name('ordonance.comment');
-    Route::get('/super-admin/produits',[SuperAdminController::class,'produit'])->name('produit');
-    Route::get('/super-admin/utilisateur',[SuperAdminController::class,'utilisateur'])->middleware('role:hyper admin')->name('users');
-    Route::put('/super-admin/pharmacie/{pharmacie}/blocked',[SuperAdminController::class,'phramacieBlocked'])->name('pharmacie.blocked');
-    Route::put('/super-admin/utilisateur/{user}/block', [userController::class, 'block'])->name('super.users.block');
-    Route::put('/super-admin/utilisateur/{user}/unblock', [userController::class, 'unblock'])->name('super.users.unblock');
-    Route::delete('/super-admin/utilisateur/{user}/delete',[userController::class,'destroy'])->name('super.users.delete');
-    Route::get('/super-admin/pharmacie/{pharmacie}',[SuperAdminController::class,'showPharmacie'])->name('pharmacie.show');
-    Route::get('/super-admin/ordonnance/{ordonance}',[SuperAdminController::class,'showOrdonnance'])->name('ordonnance.show');
-    Route::get('/super-admin/produit/create',[SuperAdminController::class,'produitCreate'])->name('produit.create');
-    Route::post('/super-admin/produit/create',[SuperAdminController::class,'produitCreateAdd'])->name('produit.createAdd');
-    Route::get('/super-admin/produit/edit/{produit}',[SuperAdminController::class,'produitEdit'])->name('produit.edit');
-    Route::put('/super-admin/produit/update/{produit}',[SuperAdminController::class,'produitUpdate'])->name('produit.update');
-    Route::delete('/super-admin/produit/delete/{produit}',[SuperAdminController::class,'produitDelete'])->name('produit.delete');
-    Route::post('/super-admin/invite/', [SuperAdminController::class, 'envoyer'])->name('user.Envoyer');
-    Route::put('/super-admi/ordonance/rejected/{ordonance}',[SuperAdminController::class,'rejected'])->name('ordonance.rejected');
-    Route::put('/super-admi/ordonance/comment/{ordonance}',[SuperAdminController::class,'comment'])->name('ordonance.comment');
+    Route::get('/Administration/Dashboard',[SuperAdminController::class,'index'])->name('home');
+    Route::get('/Administration/Dashboard/pharmacies',[SuperAdminController::class,'pharmacie'])->name('pharmacie');
+    Route::get('/Administration/Dashboard/ordonnances',[SuperAdminController::class,'ordonnance'])->name('ordonnance');
+    Route::put('/Administration/Dashboard/ordonnance/rejected/{ordonance}',[SuperAdminController::class,'Ordonancerejected'])->name('ordonance.rejected');
+    Route::put('/Administration/Dashboard/ordonnance/comment/{ordonance}',[SuperAdminController::class,'Ordonancecomment'])->name('ordonance.comment');
+    Route::get('/Administration/Dashboard/produits',[SuperAdminController::class,'produit'])->name('produit');
+    Route::get('/Administration/Dashboard/utilisateur',[SuperAdminController::class,'utilisateur'])->middleware('role:hyper admin')->name('users');
+    Route::put('/Administration/Dashboard/pharmacie/{pharmacie}/blocked',[SuperAdminController::class,'phramacieBlocked'])->name('pharmacie.blocked');
+    Route::put('/Administration/Dashboard/utilisateur/{user}/block', [userController::class, 'block'])->name('super.users.block');
+    Route::put('/Administration/Dashboard/utilisateur/{user}/unblock', [userController::class, 'unblock'])->name('super.users.unblock');
+    Route::delete('/Administration/Dashboard/utilisateur/{user}/delete',[userController::class,'destroy'])->name('super.users.delete');
+    Route::get('/Administration/Dashboard/pharmacie/{pharmacie}',[SuperAdminController::class,'showPharmacie'])->name('pharmacie.show');
+    Route::get('/Administration/Dashboard/ordonnance/{ordonance}',[SuperAdminController::class,'showOrdonnance'])->name('ordonnance.show');
+    Route::get('/Administration/Dashboard/produit/create',[SuperAdminController::class,'produitCreate'])->name('produit.create');
+    Route::post('/Administration/Dashboard/produit/create',[SuperAdminController::class,'produitCreateAdd'])->name('produit.createAdd');
+    Route::get('/Administration/Dashboard/produit/edit/{produit}',[SuperAdminController::class,'produitEdit'])->name('produit.edit');
+    Route::put('/Administration/Dashboard/produit/update/{produit}',[SuperAdminController::class,'produitUpdate'])->name('produit.update');
+    Route::delete('/Administration/Dashboard/produit/delete/{produit}',[SuperAdminController::class,'produitDelete'])->name('produit.delete');
+    Route::post('/Administration/Dashboard/invite/', [SuperAdminController::class, 'envoyer'])->name('user.Envoyer');
+    Route::put('/Administration/Dashboard/ordonnance/rejected/{ordonance}',[SuperAdminController::class,'rejected'])->name('ordonance.rejected');
+    Route::put('/Administration/Dashboard/ordonnance/comment/{ordonance}',[SuperAdminController::class,'comment'])->name('ordonance.comment');
 });
 
 require __DIR__.'/settings.php';

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Pill } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -14,28 +14,22 @@ import {
 } from '@/components/ui/sidebar';
 
 import type { NavItem } from '@/types';
-import AppLogo from './app-logo';
+import AppPharmaLogo from './AppPharmaLogo';
+
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: "",
+        href: "/dashboard/Administration/Dashboard",
         icon: LayoutGrid,
+    },
+      {
+        title: 'Pharmacie',
+        href: "/dashboard/Administration/Dashboard/pharmacies",
+        icon: Pill,
     },
 ];
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
 
 export function AppSidebar() {
     return (
@@ -45,7 +39,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
                             <Link href={''} prefetch>
-                                <AppLogo />
+                                <AppPharmaLogo />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -57,7 +51,7 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+    
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
