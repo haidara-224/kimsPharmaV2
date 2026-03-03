@@ -83,7 +83,7 @@ export function OrdonnanceDrawer({ ordonnance: o, open, onClose, onStatusChange,
                   )}
                   <div>
                     <p className="text-xs text-muted-foreground">Prescrit par</p>
-                    <p className="font-semibold mt-0.5">{o.user?.name ?? '—'}</p>
+                    <p className="font-semibold mt-0.5">{o.user?.nom ?? '—'}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Date ord.</p>

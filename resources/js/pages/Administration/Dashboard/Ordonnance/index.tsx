@@ -53,12 +53,12 @@ export default function OrdonnancesPage({
 
   const updateStatus = (o: Ordonnance, status: string) => {
     setProcessing(true);
-    router.post('/dashboard/Administration/Dashboard/ordonnances/status'), { id: o.id, status }, {
+    router.post('/dashboard/Administration/Dashboard/ordonnances/status', { id: o.id, status }, {
       preserveState: true, preserveScroll: true,
       onSuccess: () => toast.success('Statut mis à jour'),
       onError:   (e: { [s: string]: unknown; } | ArrayLike<unknown>) => toast.error(Object.values(e)[0] as string ?? 'Erreur'),
       onFinish:  () => setProcessing(false),
-    };
+    });
   };
 
   const openDrawer = (o: Ordonnance) => { setSelectedOrd(o); setDrawerOpen(true); };
@@ -71,7 +71,7 @@ export default function OrdonnancesPage({
     <AppLayout>
       <Head title="Gestion des Ordonnances" />
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         <div className="container mx-auto px-4 py-8 space-y-6">
 
           <OrdonnancesHeader total={ordonnances.total} ordonnances={filtered} />
@@ -133,7 +133,7 @@ function PaginationBar({ links, currentPage, lastPage, onPageChange }: {
       </Button>
       {pages.map((p, i) => p === '...'
         ? <Button key={`d${i}`} variant="ghost" size="icon" className="h-9 w-9" disabled><MoreHorizontal className="h-4 w-4" /></Button>
-        : <Button key={p} size="sm" variant={p === currentPage ? 'default' : 'outline'} className="h-9 min-w-[36px]"
+        : <Button key={p} size="sm" variant={p === currentPage ? 'default' : 'outline'} className="h-9 min-w-9"
             onClick={() => onPageChange(links.find(l => l.label === String(p))?.url ?? null)}>{p}</Button>
       )}
       <Button variant="outline" size="icon" className="h-9 w-9"

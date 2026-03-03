@@ -133,7 +133,7 @@ export function OrdonnancesTable({ ordonnances, onView, onStatusChange, isProces
                       <TableCell className="py-3">
                         <div className="flex items-center gap-1.5">
                           <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-sm truncate max-w-[130px]">{o.pharmacie?.name ?? '—'}</span>
+                          <span className="text-sm truncate max-w-32.5">{o.pharmacie?.name ?? '—'}</span>
                         </div>
                       </TableCell>
 
@@ -216,7 +216,7 @@ export function OrdonnancesTable({ ordonnances, onView, onStatusChange, isProces
                                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                                     <User className="h-3 w-3" /> Prescrit par
                                   </p>
-                                  <p className="text-sm font-medium">{o.user?.name ?? '—'}</p>
+                                  <p className="text-sm font-medium">{o.user?.nom ?? '—'}</p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">

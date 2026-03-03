@@ -33,6 +33,11 @@ const mainNavItems: NavItem[] = [
         href: "/dashboard/Administration/Dashboard/ordonnances",
         icon: BookOpen,
     },
+     {
+        title: 'Produits',
+        href: "/dashboard/Administration/Dashboard/produits",
+        icon: Folder,
+    },
 ];
 
 

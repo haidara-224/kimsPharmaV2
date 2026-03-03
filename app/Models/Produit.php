@@ -12,7 +12,6 @@ class Produit extends Model
 
     protected $fillable = ['produit','categorie','sous_categorie','forme','dosage','images'];
 
-    // cast images column from JSON to array automatically
     protected $casts = [
         'images' => 'array',
     ];

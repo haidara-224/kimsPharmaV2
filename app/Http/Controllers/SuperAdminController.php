@@ -246,15 +246,129 @@ public function updateOrdonnanceStatus(Request $request)
 
     return back();
 }
-    public function produit()
-    {
-        $produit = Produit::orderByDesc('created_at')->paginate(10);
+public function produit()
+{
+    $produits = Produit::withCount('ordonances')
+        ->orderByDesc('created_at')
+        ->paginate(12)
+        ->through(function ($produit) {
+       
+            $produit->pharmacies_count = DB::table('phamacie_produits')
+                ->whereRaw('FIND_IN_SET(?, produit_id)', [(string) $produit->id])
+                ->count();
+            return $produit;
+        });
 
-        return Inertia::render('Administration/Dashboard/Produit/index', [
-            'produit' => $produit
-        ]);
+    $stats = [
+        'total'       => Produit::count(),
+        'categories'  => Produit::distinct()->count('categorie'),
+        'avec_forme'  => Produit::whereNotNull('forme')->where('forme', '!=', '')->count(),
+        'avec_dosage' => Produit::whereNotNull('dosage')->where('dosage', '!=', '')->count(),
+        'top_categories' => Produit::selectRaw('categorie, COUNT(*) as count')
+            ->groupBy('categorie')
+            ->orderByDesc('count')
+            ->limit(6)
+            ->get()
+            ->map(fn($c) => ['name' => $c->categorie, 'count' => $c->count])
+            ->toArray(),
+    ];
+
+    return Inertia::render('Administration/Dashboard/Produit/index', [
+        'produits' => $produits,
+        'stats'    => $stats,
+    ]);
+}
+
+public function storeProduit(Request $request)
+{
+    $validated = $request->validate([
+        'produit'        => ['required','string','max:255'],
+        'categorie'      => ['required','string','max:255'],
+        'sous_categorie' => ['nullable','string','max:255'],
+        'forme'          => ['nullable','string','max:255'],
+        'dosage'         => ['nullable','string','max:255'],
+        'new_images'         => ['nullable','array','max:4'],
+        'new_images.*'       => ['image','mimes:jpeg,png,jpg,webp','max:2048'],
+    ]);
+
+  if ($request->hasFile('new_images')) {
+    $validated['images'] = collect($request->file('new_images'))
+        ->map(fn($img) => $img->store('produits', 'public'))
+        ->toArray();
+}
+
+unset($validated['new_images']);
+
+    Produit::create($validated);
+
+    return back()->with('success', 'Produit créé avec succès');
+}
+public function updateProduit(Request $request, Produit $produit)
+{
+    $request->validate([
+        'produit'            => ['required','string','max:255'],
+        'categorie'          => ['required','string','max:255'],
+        'sous_categorie'     => ['nullable','string','max:255'],
+        'forme'              => ['nullable','string','max:255'],
+        'dosage'             => ['nullable','string','max:255'],
+        'new_images'         => ['nullable','array'],
+        'new_images.*'       => ['image','mimes:jpeg,png,jpg,webp','max:2048'],
+        'deleted_images'     => ['nullable','array'],
+        'deleted_images.*'   => ['string'],
+    ]);
+
+    // Sécurisation images existantes
+    $currentImages = is_array($produit->images)
+        ? $produit->images
+        : json_decode($produit->images, true) ?? [];
+
+    // Suppression images
+    if ($request->deleted_images) {
+        foreach ($request->deleted_images as $path) {
+            Storage::disk('public')->delete($path);
+        }
+
+        $currentImages = array_values(array_filter(
+            $currentImages,
+            fn($img) => !in_array($img, $request->deleted_images)
+        ));
     }
 
+    // Ajout nouvelles images (max 4)
+    if ($request->hasFile('new_images')) {
+        $remaining = 4 - count($currentImages);
+
+        foreach (array_slice($request->file('new_images'), 0, $remaining) as $img) {
+            $currentImages[] = $img->store('produits', 'public');
+        }
+    }
+
+    $produit->update([
+        'produit'        => $request->produit,
+        'categorie'      => $request->categorie,
+        'sous_categorie' => $request->sous_categorie,
+        'forme'          => $request->forme,
+        'dosage'         => $request->dosage,
+        'images'         => $currentImages ?: null,
+    ]);
+
+    return back()->with('success', 'Produit modifié avec succès');
+}
+
+public function destroyProduit(Produit $produit)
+{
+    $images = is_array($produit->images)
+        ? $produit->images
+        : json_decode($produit->images, true);
+
+    foreach ($images ?? [] as $img) {
+        Storage::disk('public')->delete($img);
+    }
+
+    $produit->delete();
+
+    return back()->with('success', 'Produit supprimé');
+}
     public function utilisateur()
     {
         $superAdminUsers = User::whereHas('roles', function ($query) {
