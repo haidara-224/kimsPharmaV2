@@ -10,6 +10,7 @@ use App\Models\Searched_product;
 use App\Models\User;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -199,18 +200,57 @@ public function pharmacie()
     ]);
 }
     public function ordonnance()
-    {
-        $ordonnance = ordonance::with('user', 'pharmacie')->paginate(10);
+{
+    $ordonnances = Ordonance::with(['user', 'pharmacie', 'produits'])
+        ->withCount('produits')
+        ->orderByDesc('created_at')
+        ->paginate(10);
 
-        return view('super-admin.ordonnance.index', [
-            'ordonnance' => $ordonnance
-        ]);
-    }
+
+    $stats = [
+        'total'     => Ordonance::count(),
+        'pending'   => Ordonance::where('status', 'pending')->count(),
+        'processed' => Ordonance::where('status', 'processed')->count(),
+        'rejected'  => Ordonance::where('status', 'rejected')->count(),
+        'to_create' => Ordonance::where('status', 'to_create')->count(),
+        'comment'   => Ordonance::where('status', 'comment')->count(),
+        'ca_total'  => (float) Ordonance::where('status', 'processed')->sum('total'),
+        'ca_mois'   => (float) Ordonance::where('status', 'processed')
+                            ->whereMonth('created_at', now()->month)
+                            ->whereYear('created_at',  now()->year)
+                            ->sum('total'),
+  
+        'en_pharmacie'       => Ordonance::where('statut_livraison', 'En Pharmacie')->count(),
+        'livraison_express'  => Ordonance::where('statut_livraison', 'Livraison express')->count(),
+        'livraison_standard' => Ordonance::where('statut_livraison', 'Livraison Standard')->count(),
+        'livraison_gratuite' => Ordonance::where('statut_livraison', 'Livraison Gratuite')->count(),
+    ];
+
+    return Inertia::render('Administration/Dashboard/Ordonnance/index', [
+        'ordonnances' => $ordonnances,
+        'stats'       => $stats,
+    ]);
+}
+public function updateOrdonnanceStatus(Request $request)
+{
+    $request->validate([
+        'id'     => ['required', 'integer', 'exists:ordonances,id'],
+        'status' => ['required', 'in:pending,processed,rejected,to_create,comment'],
+    ]);
+
+    $ordonnance = Ordonance::findOrFail($request->id);
+    $ordonnance->update([
+        'status'      => $request->status,
+        'approuve_par'=> in_array($request->status, ['processed','rejected']) ? Auth::id() : $ordonnance->approuve_par,
+    ]);
+
+    return back();
+}
     public function produit()
     {
-        $produit = produit::orderByDesc('created_at')->paginate(10);
+        $produit = Produit::orderByDesc('created_at')->paginate(10);
 
-        return view('super-admin.produit.index', [
+        return Inertia::render('Administration/Dashboard/Produit/index', [
             'produit' => $produit
         ]);
     }
@@ -238,12 +278,11 @@ public function pharmacie()
         $users = $pharmacie->users()->get();
         $ordonnances = $pharmacie->ordonances()->get();
 
-        // Regroupement des ordonnances par mois
         $ordonnancesParMois = $ordonnances->groupBy(function ($ordonnance) {
-            return \Carbon\Carbon::parse($ordonnance->created_at)->format('Y-m'); // Format 'année-mois'
+            return \Carbon\Carbon::parse($ordonnance->created_at)->format('Y-m'); 
         });
 
-        // Compter le nombre d'ordonnances par mois
+       
         $ordonnancesCountParMois = $ordonnancesParMois->map(function ($monthGroup) {
             return $monthGroup->count();
         });

@@ -57,6 +57,7 @@ Route::middleware('auth','role:super admin','checkblocked')->prefix('dashboard')
     Route::get('/Administration/Dashboard',[SuperAdminController::class,'index'])->name('home');
     Route::get('/Administration/Dashboard/pharmacies',[SuperAdminController::class,'pharmacie'])->name('pharmacie');
     Route::get('/Administration/Dashboard/ordonnances',[SuperAdminController::class,'ordonnance'])->name('ordonnance');
+    Route::post('/Administration/Dashboard/ordonnances/status',      [SuperAdminController::class, 'updateOrdonnanceStatus'])->name('ordonnances.status');
     Route::put('/Administration/Dashboard/ordonnance/rejected/{ordonance}',[SuperAdminController::class,'Ordonancerejected'])->name('ordonance.rejected');
     Route::put('/Administration/Dashboard/ordonnance/comment/{ordonance}',[SuperAdminController::class,'Ordonancecomment'])->name('ordonance.comment');
     Route::get('/Administration/Dashboard/produits',[SuperAdminController::class,'produit'])->name('produit');

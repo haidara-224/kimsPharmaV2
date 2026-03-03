@@ -28,6 +28,11 @@ const mainNavItems: NavItem[] = [
         href: "/dashboard/Administration/Dashboard/pharmacies",
         icon: Pill,
     },
+     {
+        title: 'Ordonnances',
+        href: "/dashboard/Administration/Dashboard/ordonnances",
+        icon: BookOpen,
+    },
 ];
 
 
