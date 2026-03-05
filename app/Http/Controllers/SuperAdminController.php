@@ -8,7 +8,7 @@ use App\Models\Pharmacie;
 use App\Models\Produit;
 use App\Models\Searched_product;
 use App\Models\User;
-
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -369,16 +369,7 @@ public function destroyProduit(Produit $produit)
 
     return back()->with('success', 'Produit supprimé');
 }
-    public function utilisateur()
-    {
-        $superAdminUsers = User::whereHas('roles', function ($query) {
-            $query->where('name', 'super admin');
-        })->paginate(10);
-
-        return view('super-admin.utilisateur.super-admin', [
-            'users' => $superAdminUsers
-        ]);
-    }
+    
     public function phramacieBlocked(Pharmacie $pharmacie)
     {
         $pharmacie->update([

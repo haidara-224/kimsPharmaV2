@@ -39,6 +39,7 @@ const mainNavItems: NavItem[] = [
         href: "/paramettrage",
         icon: BookOpen,
     },
+    
 
 ];
 

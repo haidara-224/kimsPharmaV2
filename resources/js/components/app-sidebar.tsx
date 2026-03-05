@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Pill } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Pill, Wrench } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -37,6 +37,11 @@ const mainNavItems: NavItem[] = [
         title: 'Produits',
         href: "/dashboard/Administration/Dashboard/produits",
         icon: Folder,
+    },
+    {
+        title: 'Paramètres',
+        href: "/dashboard/Administration/Dashboard/parametres",
+        icon:Wrench ,
     },
 ];
 

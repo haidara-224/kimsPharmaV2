@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnalylicsRepportsController;
 use App\Http\Controllers\OrdonanceController;
+use App\Http\Controllers\ParamettreController;
 use App\Http\Controllers\PharmacieController;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\SearchedProductController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use PhpParser\Builder\Param;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -62,11 +64,11 @@ Route::middleware('auth', 'role:super admin', 'checkblocked')->prefix('dashboard
     Route::post('/Administration/Dashboard/produits',              [SuperAdminController::class, 'storeProduit'])->name('produits.store');
     Route::put('/Administration/Dashboard/produits/{produit}',    [SuperAdminController::class, 'updateProduit'])->name('produits.update');
     Route::delete('/Administration/Dashboard/produits/{produit}',  [SuperAdminController::class, 'destroyProduit'])->name('produits.destroy');
-    Route::get('/Administration/Dashboard/utilisateur', [SuperAdminController::class, 'utilisateur'])->middleware('role:hyper admin')->name('users');
+    Route::get('/Administration/Dashboard/parametres', [ParamettreController::class, 'utilisateur'])->middleware('role:hyper admin')->name('users');
     Route::put('/Administration/Dashboard/pharmacie/{pharmacie}/blocked', [SuperAdminController::class, 'phramacieBlocked'])->name('pharmacie.blocked');
-    Route::put('/Administration/Dashboard/utilisateur/{user}/block', [userController::class, 'block'])->name('super.users.block');
-    Route::put('/Administration/Dashboard/utilisateur/{user}/unblock', [userController::class, 'unblock'])->name('super.users.unblock');
-    Route::delete('/Administration/Dashboard/utilisateur/{user}/delete', [userController::class, 'destroy'])->name('super.users.delete');
+    Route::put('/Administration/Dashboard/utilisateur/{user}/block', [ParamettreController::class, 'block'])->name('super.users.block');
+    Route::put('/Administration/Dashboard/utilisateur/{user}/unblock', [ParamettreController::class, 'unblock'])->name('super.users.unblock');
+    Route::delete('/Administration/Dashboard/utilisateur/{user}/delete', [ParamettreController::class, 'destroy'])->name('super.users.delete');
     Route::get('/Administration/Dashboard/pharmacie/{pharmacie}', [SuperAdminController::class, 'showPharmacie'])->name('pharmacie.show');
     Route::get('/Administration/Dashboard/ordonnance/{ordonance}', [SuperAdminController::class, 'showOrdonnance'])->name('ordonnance.show');
     Route::get('/Administration/Dashboard/produit/create', [SuperAdminController::class, 'produitCreate'])->name('produit.create');
@@ -74,7 +76,7 @@ Route::middleware('auth', 'role:super admin', 'checkblocked')->prefix('dashboard
     Route::get('/Administration/Dashboard/produit/edit/{produit}', [SuperAdminController::class, 'produitEdit'])->name('produit.edit');
     Route::put('/Administration/Dashboard/produit/update/{produit}', [SuperAdminController::class, 'produitUpdate'])->name('produit.update');
     Route::delete('/Administration/Dashboard/produit/delete/{produit}', [SuperAdminController::class, 'produitDelete'])->name('produit.delete');
-    Route::post('/Administration/Dashboard/invite/', [SuperAdminController::class, 'envoyer'])->name('user.Envoyer');
+    Route::post('/Administration/Dashboard/invite/', [ParamettreController::class, 'envoyer'])->name('user.Envoyer');
     Route::put('/Administration/Dashboard/ordonnance/rejected/{ordonance}', [SuperAdminController::class, 'rejected'])->name('ordonance.rejected');
     Route::put('/Administration/Dashboard/ordonnance/comment/{ordonance}', [SuperAdminController::class, 'comment'])->name('ordonance.comment');
 
