@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\Assurence;
+use App\Models\Membre;
 use App\Models\Ordonance;
 use App\Models\Pharmacie;
 use App\Models\Produit;
 use App\Models\Searched_product;
-use App\Models\SearchedProduct;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -55,7 +56,11 @@ class DatabaseSeeder extends Seeder
             }
         });
 
-        // 6️⃣ Produits disponibles dans les pharmacies
+        // 6️⃣ Assurances et membres
+        Assurence::factory()->count(20)->create();
+        Membre::factory()->count(100)->create();
+
+        // 7️⃣ Produits disponibles dans les pharmacies
         Pharmacie::all()->each(function ($pharmacie) {
 
             $produitIds = Produit::inRandomOrder()
@@ -66,14 +71,31 @@ class DatabaseSeeder extends Seeder
                 DB::table('pharmacie_produits')->insert([
                     'pharmacie_id' => $pharmacie->id,
                     'produit_id' => $produitId,
-                    'price' => rand(10000, 2000000), 
+                    'price' => rand(10000, 2000000),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
         });
 
-        // 7️⃣ Super Admin
+        // 8️⃣ Assurances liées aux pharmacies
+        Assurence::all()->each(function ($assurance) {
+
+            $pharmacieIds = Pharmacie::inRandomOrder()
+                ->take(rand(5, 15))
+                ->pluck('id');
+
+            foreach ($pharmacieIds as $pharmacieId) {
+                DB::table('assurence_pharmacies')->insert([
+                    'assurence_id' => $assurance->id,
+                    'pharmacie_id' => $pharmacieId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        });
+
+        // 9️⃣ Super Admin
         $userSuperAdmin = User::factory()->create([
             'nom' => 'haidara',
             'email' => 'sidymohamedcherifhaidara02@gmail.com',
