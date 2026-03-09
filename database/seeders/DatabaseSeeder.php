@@ -66,6 +66,7 @@ class DatabaseSeeder extends Seeder
                 DB::table('pharmacie_produits')->insert([
                     'pharmacie_id' => $pharmacie->id,
                     'produit_id' => $produitId,
+                    'price' => rand(10000, 2000000), 
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

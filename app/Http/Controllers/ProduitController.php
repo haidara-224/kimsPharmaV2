@@ -24,7 +24,7 @@ class ProduitController extends Controller
 
 
 $pharmacieProductsDetails = PharmacieProduit::where('pharmacie_id', $pharmacieId)
-    ->with('produit') // récupère le modèle Produit lié
+    ->with('produit') 
     ->get()
     ->map(function ($pp) {
         $produit = $pp->produit;
