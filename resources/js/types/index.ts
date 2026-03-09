@@ -67,7 +67,7 @@ export interface Produit {
   forme?: string | null
   dosage?: string | null
   images?: string[] | null
-
+price: number
   // Relations
   ordonances?: Ordonnance[]
   pharmacies?: Pharmacie[]

@@ -5,95 +5,92 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProduitaddRequest;
 use App\Models\Pharmacie;
 use App\Models\Produit;
-use App\Models\PhamacieProduit;
+use App\Models\PharmacieProduit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
+use function Laravel\Prompts\select;
+
 class ProduitController extends Controller
 {
-    public function index()
-    {
-        $user = Auth::user();
-        $pharmacieId = $user->pharmacie->id;
-        $products = Produit::pluck('produit', 'id');
-        $pharmacieProduit = PhamacieProduit::where('pharmacie_id', $pharmacieId)->first();
-        $existingProducts = $pharmacieProduit && $pharmacieProduit->produit_id
-            ? explode(',', $pharmacieProduit->produit_id)
-            : [];
-
-        $pharmacieProductsDetails = Produit::whereIn('id', $existingProducts)->get();
-
-        return Inertia::render('Produit/Index', [
-            'products' => $products,
-            'pharmacieProductsDetails' => $pharmacieProductsDetails,
-        ]);
-    }
-
- public function produitCreateAdd(ProduitaddRequest $produitaddRequest)
+   public function index()
 {
-    $produit = new Produit();
     $user = Auth::user();
     $pharmacieId = $user->pharmacie->id;
 
-    // Vérifier si plusieurs images sont envoyées
-    if ($produitaddRequest->hasFile('images')) {
-        $images = $produitaddRequest->file('images');
-        $storedImages = [];
 
-        foreach ($images as $image) {
+    $products = Produit::pluck('produit', 'id');
+
+
+$pharmacieProductsDetails = PharmacieProduit::where('pharmacie_id', $pharmacieId)
+    ->with('produit') // récupère le modèle Produit lié
+    ->get()
+    ->map(function ($pp) {
+        $produit = $pp->produit;
+        $produit->price = $pp->price;
+        return $produit;
+    });
+
+    return Inertia::render('Produit/Index', [
+        'products' => $products,
+        'pharmacieProductsDetails' => $pharmacieProductsDetails,
+    ]);
+}
+public function produitCreateAdd(ProduitaddRequest $request)
+{
+    $user = Auth::user();
+    $pharmacieId = $user->pharmacie->id;
+
+    // Création du produit
+    $produit = new Produit();
+    $produit->produit = $request->produit;
+    $produit->categorie = $request->categorie;
+    $produit->sous_categorie = $request->sous_categorie;
+    $produit->forme = $request->forme;
+    $produit->dosage = $request->dosage;
+
+
+    // Gestion des images multiples
+    if ($request->hasFile('images')) {
+        $storedImages = [];
+        foreach ($request->file('images') as $image) {
             $storedImages[] = $image->store('produits', 'public');
         }
-
-        // Stocker sous forme JSON pour pouvoir récupérer plusieurs images
         $produit->images = json_encode($storedImages);
     }
 
-    $produit->produit = $produitaddRequest->produit;
-    $produit->categorie = $produitaddRequest->categorie;
-    $produit->sous_categorie = $produitaddRequest->sous_categorie;
-    $produit->forme = $produitaddRequest->forme;
-    $produit->dosage = $produitaddRequest->dosage;
     $produit->save();
 
-    // Gestion de la pharmacie et des produits existants
-    $pharmacieProduit = PhamacieProduit::firstOrCreate(
-        ['pharmacie_id' => $pharmacieId],
-        ['produit_id' => ''] 
-    );
+    // Associer le produit à la pharmacie
+    $user->pharmacie->produits()->syncWithoutDetaching([
+        $produit->id => [
+            'price' => $request->price ?? 0 
+        ]
+    ]);
 
-    $existingProducts = array_filter(array_map('intval', explode(',', $pharmacieProduit->produit_id)));
-
-    if (!in_array($produit->id, $existingProducts)) {
-        $existingProducts[] = $produit->id;
-        $pharmacieProduit->update([
-            'produit_id' => implode(',', $existingProducts)
-        ]);
-    }
-
-    return redirect()->back()->with('success', 'Le produit a été ajouté avec succès');
+    return redirect()->back()->with('success', 'Le produit a été ajouté avec succès.');
 }
 
-    public function store(Request $request)
-    {
-        $user = Auth::user();
-        $pharmacieId = $user->pharmacie->id;
 
-        $produitsIds = array_map('intval', (array) $request->input('products', []));
+public function store(Request $request)
+{
+    $user = Auth::user();
+    $pharmacie = $user->pharmacie;
 
+    $produitsIds = array_map('intval', (array) $request->input('products', []));
+    $prices = $request->input('prices', []);
 
-        $pharmacieProduit = PhamacieProduit::firstOrCreate(
-            ['pharmacie_id' => $pharmacieId],
-            ['produit_id' => '']
-        );
-
-
-        $pharmacieProduit->produit_id = implode(',', $produitsIds);
-        $pharmacieProduit->save();
-
-        return back()->with('success', 'Liste des produits mise à jour avec succès.');
+    // Construire le tableau associatif pour sync
+    $syncData = [];
+    foreach ($produitsIds as $id) {
+        $syncData[$id] = ['price' => $prices[$id] ?? 0];
     }
 
+    $pharmacie->produits()->sync($syncData);
+
+    return back()->with('success', 'Liste des produits mise à jour avec succès.');
+}
     public function destroy($id)
     {
 

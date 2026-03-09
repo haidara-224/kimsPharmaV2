@@ -19,8 +19,8 @@ class Pharmacie extends Model
     {
         return $this->hasMany(Ordonance::class);
     }
-    public function produits():BelongsToMany
+        public function produits()
     {
-        return $this->belongsToMany(Produit::class);
+        return $this->belongsToMany(Produit::class, 'pharmacie_produits', 'pharmacie_id', 'produit_id');
     }
 }

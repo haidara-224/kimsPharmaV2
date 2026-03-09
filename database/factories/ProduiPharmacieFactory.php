@@ -18,14 +18,11 @@ class ProduiPharmacieFactory extends Factory
      */
     public function definition(): array
     {
-       $produitIds = Produit::inRandomOrder()
-            ->take(rand(1, 9)) 
-            ->pluck('id')
-            ->toArray();
+    
 
         return [
             'pharmacie_id' => Pharmacie::inRandomOrder()->first()?->id,
-            'produit_id' => implode(',', $produitIds), 
+            'produit_id' => Produit::inRandomOrder()->value('id'),
         ];
     }
 }

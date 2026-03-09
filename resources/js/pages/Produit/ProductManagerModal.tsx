@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 import { router } from '@inertiajs/react';
 import {
   Dialog,
@@ -68,6 +68,11 @@ export function ProductManagerModal({
   const [activeTab, setActiveTab] = useState<'select' | 'create'>('select');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<number[]>(existingProducts);
+
+  // Synchroniser selectedProducts avec existingProducts si la prop change
+  useEffect(() => {
+    setSelectedProducts(existingProducts);
+  }, [existingProducts]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,25 +80,43 @@ export function ProductManagerModal({
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const itemsPerPage = 12;
 
+  // État pour les prix des produits sélectionnés
+  const [prices, setPrices] = useState<Record<number, number>>({});
+
+  // État pour le popup de prix
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
+  const [currentProductId, setCurrentProductId] = useState<number | null>(null);
+  const [tempPrice, setTempPrice] = useState('');
+
   // État pour le formulaire de création
-  const [newProduct, setNewProduct] = useState({
-    produit: '',
-    categorie: '',
-    sous_categorie: '',
-    forme: '',
-    dosage: '',
-    images: [] as File[], // tableau pour plusieurs fichiers
-  });
+const [newProduct, setNewProduct] = useState({
+  produit: '',
+  categorie: '',
+  sous_categorie: '',
+  forme: '',
+  dosage: '',
+  price: '',
+  label: '',           // ← AJOUTER
+  images: [] as File[],
+});
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
 
   // Transformer products en tableau pour plus de facilité
   const productsArray = useMemo(() => {
-    return Object.entries(products).map(([id, name]) => ({
+    const array = Object.entries(products).map(([id, name]) => ({
       id: parseInt(id),
       name: name as string
     }));
-  }, [products]);
+    // Trier pour mettre les produits sélectionnés en premier
+    return array.sort((a, b) => {
+      const aSelected = selectedProducts.includes(a.id);
+      const bSelected = selectedProducts.includes(b.id);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return a.id - b.id; // Tri par ID sinon
+    });
+  }, [products, selectedProducts]);
 
   // Filtrer les produits
   const filteredProducts = useMemo(() => {
@@ -126,15 +149,18 @@ export function ProductManagerModal({
     setCurrentPage(1);
   }, [searchTerm, showSelectedOnly]);
 
-  // Gérer la sélection/désélection d'un produit
-  const toggleProduct = (productId: number) => {
-    setSelectedProducts(prev => {
-      if (prev.includes(productId)) {
-        return prev.filter(id => id !== productId);
-      } else {
-        return [...prev, productId];
+  // Gérer la soumission du prix
+  const handlePriceSubmit = () => {
+    if (currentProductId !== null && tempPrice) {
+      const price = parseFloat(tempPrice);
+      if (!isNaN(price)) {
+        setPrices(prev => ({ ...prev, [currentProductId]: price }));
+        setSelectedProducts(prev => [...prev, currentProductId]);
+        setPriceDialogOpen(false);
+        setCurrentProductId(null);
+        setTempPrice('');
       }
-    });
+    }
   };
 
   // Sélectionner/désélectionner tous les produits visibles
@@ -176,12 +202,10 @@ export function ProductManagerModal({
 
   // Soumettre les produits sélectionnés (ajouts et suppressions)
 const handleSubmitSelection = () => {
-  // On envoie toujours la liste complète des produits sélectionnés.
-  // Le backend se charge de mettre à jour l'enregistrement en conséquence,
-  // y compris la suppression des produits décochés.
+
   setIsSubmitting(true);
 
-  router.post('/produit/create', { products: selectedProducts }, {
+  router.post('/produit/create', { products: selectedProducts, prices, pharmacieId }, {
     onSuccess: () => {
       toast.success("La liste des produits a été mise à jour pour votre pharmacie.");
       onOpenChange(false);
@@ -211,6 +235,7 @@ const handleSubmitSelection = () => {
     if (newProduct.sous_categorie) formData.append('sous_categorie', newProduct.sous_categorie);
     if (newProduct.forme) formData.append('forme', newProduct.forme);
     if (newProduct.dosage) formData.append('dosage', newProduct.dosage);
+    if (newProduct.price) formData.append('price', newProduct.price);
     if (newProduct.images.length > 0) {
       newProduct.images.forEach((img) => formData.append('images[]', img));
     }
@@ -224,6 +249,8 @@ const handleSubmitSelection = () => {
           sous_categorie: '',
           forme: '',
           dosage: '',
+          price: '',
+          label: '',
           images: [],
         });
         setImagePreview([]);
@@ -237,9 +264,25 @@ const handleSubmitSelection = () => {
       }
     });
   };
+  const toggleProduct = (id: number) => {
+  if (selectedProducts.includes(id)) {
+    // Décocher → retirer le produit et son prix
+    setSelectedProducts(prev => prev.filter(pid => pid !== id));
+    setPrices(prev => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  } else {
+    // Cocher → ouvrir le popup pour saisir le prix
+    setCurrentProductId(id);
+    setTempPrice('');
+    setPriceDialogOpen(true);
+  }
+};
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <><Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-225 p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
@@ -282,8 +325,7 @@ const handleSubmitSelection = () => {
                     placeholder="Rechercher un produit..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 pr-9"
-                  />
+                    className="pl-9 pr-9" />
                   {searchTerm && (
                     <button
                       onClick={() => setSearchTerm('')}
@@ -322,8 +364,7 @@ const handleSubmitSelection = () => {
                   >
                     {paginatedProducts.every(p => selectedProducts.includes(p.id))
                       ? 'Tout désélectionner'
-                      : 'Tout sélectionner'
-                    }
+                      : 'Tout sélectionner'}
                   </Button>
                   <Badge variant="outline" className="text-xs">
                     {filteredProducts.length} produits trouvés
@@ -353,8 +394,7 @@ const handleSubmitSelection = () => {
                           relative p-4 rounded-lg border-2 cursor-pointer transition-all
                           ${selectedProducts.includes(product.id)
                             ? 'border-primary bg-primary/5 shadow-md'
-                            : 'border-transparent bg-card hover:border-muted'
-                          }
+                            : 'border-transparent bg-card hover:border-muted'}
                         `}
                         onClick={() => toggleProduct(product.id)}
                       >
@@ -363,8 +403,7 @@ const handleSubmitSelection = () => {
                             w-5 h-5 rounded-full border-2 flex items-center justify-center
                             ${selectedProducts.includes(product.id)
                               ? 'border-primary bg-primary text-white'
-                              : 'border-muted-foreground'
-                            }
+                              : 'border-muted-foreground'}
                           `}>
                             {selectedProducts.includes(product.id) && (
                               <Check className="h-3 w-3" />
@@ -404,8 +443,7 @@ const handleSubmitSelection = () => {
                           flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer
                           ${selectedProducts.includes(product.id)
                             ? 'border-primary bg-primary/5'
-                            : 'border-transparent hover:border-muted'
-                          }
+                            : 'border-transparent hover:border-muted'}
                         `}
                         onClick={() => toggleProduct(product.id)}
                       >
@@ -413,8 +451,7 @@ const handleSubmitSelection = () => {
                           <Checkbox
                             checked={selectedProducts.includes(product.id)}
                             onCheckedChange={() => toggleProduct(product.id)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
+                            onClick={(e) => e.stopPropagation()} />
                           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                             <Package className="h-4 w-4 text-primary" />
                           </div>
@@ -439,10 +476,9 @@ const handleSubmitSelection = () => {
                   <Package className="h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="font-semibold text-lg mb-2">Aucun produit trouvé</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {searchTerm 
+                    {searchTerm
                       ? "Aucun produit ne correspond à votre recherche"
-                      : "Vous n'avez pas encore de produits dans cette catégorie"
-                    }
+                      : "Vous n'avez pas encore de produits dans cette catégorie"}
                   </p>
                   {searchTerm && (
                     <Button variant="outline" onClick={() => setSearchTerm('')}>
@@ -495,8 +531,7 @@ const handleSubmitSelection = () => {
                             <img
                               src={src}
                               alt={`Aperçu ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
+                              className="w-full h-full object-cover" />
                             <button
                               type="button"
                               onClick={() => removeImage(idx)}
@@ -520,8 +555,7 @@ const handleSubmitSelection = () => {
                       accept="image/*"
                       multiple
                       onChange={handleImageChange}
-                      className="cursor-pointer"
-                    />
+                      className="cursor-pointer" />
                     <p className="text-xs text-muted-foreground mt-1">
                       PNG, JPG ou WEBP (max. 2MB)
                     </p>
@@ -538,8 +572,7 @@ const handleSubmitSelection = () => {
                     value={newProduct.produit}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, produit: e.target.value }))}
                     placeholder="Ex: Paracétamol"
-                    required
-                  />
+                    required />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
@@ -550,8 +583,7 @@ const handleSubmitSelection = () => {
                     onChange={(e) => setNewProduct(prev => ({ ...prev, categorie: e.target.value }))}
                     placeholder="Ex: Antalgique"
                     list="categories"
-                    required
-                  />
+                    required />
                   <datalist id="categories">
                     {PREDEFINED_CATEGORIES.map(cat => (
                       <option key={cat} value={cat} />
@@ -566,8 +598,7 @@ const handleSubmitSelection = () => {
                   <Input
                     value={newProduct.sous_categorie}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, sous_categorie: e.target.value }))}
-                    placeholder="Ex: Antipyrétique"
-                  />
+                    placeholder="Ex: Antipyrétique" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Forme</label>
@@ -575,8 +606,7 @@ const handleSubmitSelection = () => {
                     value={newProduct.forme}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, forme: e.target.value }))}
                     placeholder="Ex: Comprimé"
-                    list="formes"
-                  />
+                    list="formes" />
                   <datalist id="formes">
                     {PREDEFINED_FORMES.map(forme => (
                       <option key={forme} value={forme} />
@@ -590,20 +620,32 @@ const handleSubmitSelection = () => {
                 <Input
                   value={newProduct.dosage}
                   onChange={(e) => setNewProduct(prev => ({ ...prev, dosage: e.target.value }))}
-                  placeholder="Ex: 500mg"
-                />
+                  placeholder="Ex: 500mg" />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  Prix <span className="text-destructive">*</span>
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
+                  placeholder="Ex: 10.50"
+                  required />
               </div>
 
               <div className="pt-4 flex justify-end gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setActiveTab('select')}
                 >
                   Annuler
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isCreating}
                   className="gap-2"
                 >
@@ -628,7 +670,7 @@ const handleSubmitSelection = () => {
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>
-          <Button 
+          <Button
             onClick={handleSubmitSelection}
             disabled={isSubmitting || selectedProducts.length === 0}
             className="gap-2"
@@ -648,7 +690,36 @@ const handleSubmitSelection = () => {
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog><Dialog open={priceDialogOpen} onOpenChange={setPriceDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Définir le prix</DialogTitle>
+            <DialogDescription>
+              Veuillez saisir le prix pour ce produit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Prix</label>
+              <Input
+                type="number"
+                step="0.01"
+                value={tempPrice}
+                onChange={(e) => setTempPrice(e.target.value)}
+                placeholder="Ex: 10.50"
+                autoFocus />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setPriceDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handlePriceSubmit} disabled={!tempPrice}>
+              Confirmer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog></>
   );
 }
 

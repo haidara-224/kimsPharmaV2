@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import {
   Card,
   CardContent,
@@ -35,11 +35,7 @@ import { BreadcrumbItem, Produit } from '@/types';
 import AppLayout from '@/layouts/phamacie-layout';
 import { ProductManagerModal } from './ProductManagerModal';
 
-// ==================== UTILITAIRES DE GESTION D'IMAGES ====================
 
-/**
- * Nettoie le chemin d'une image pour éviter les doubles /storage/
- */
 const cleanImagePath = (path: string): string => {
   if (!path) return '';
   
@@ -58,9 +54,7 @@ const cleanImagePath = (path: string): string => {
   return cleanPath;
 };
 
-/**
- * Convertit le champ 'images' en tableau de chemins d'images
- */
+
 const normalizeImages = (imgs: Produit['images']): string[] => {
   if (!imgs) return [];
   
@@ -123,6 +117,7 @@ const getImageUrl = (imagePath: string): string => {
 interface IndexProps {
   products: Record<number, string>;
   pharmacieProductsDetails: Produit[];
+  price:number;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -139,6 +134,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 
 export default function Index({ products, pharmacieProductsDetails }: IndexProps) {
+  const { auth } = usePage().props as any;
+  const pharmacieId = auth.user.pharmacie.id;
+
   // États
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -150,7 +148,6 @@ export default function Index({ products, pharmacieProductsDetails }: IndexProps
   // IDs des produits existants
   const existingProducts = pharmacieProductsDetails.map(p => p.id);
 
-  // Statistiques
   const stats = {
     totalProducts: pharmacieProductsDetails.length,
     categories: new Set(pharmacieProductsDetails.map(p => p.categorie)).size,
@@ -200,7 +197,7 @@ export default function Index({ products, pharmacieProductsDetails }: IndexProps
         onOpenChange={setIsModalOpen}
         products={products}
         existingProducts={existingProducts}
-        pharmacieId={1}
+        pharmacieId={pharmacieId}
       />
 
       <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
@@ -581,14 +578,12 @@ const ProductsGrid = ({ products }: any) => {
                   <p className="text-xs text-muted-foreground">Dosage</p>
                   <p className="text-sm font-medium">{product.dosage || 'Non spécifié'}</p>
                 </div>
-                {product.sous_categorie && (
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Sous-catégorie</p>
-                    <p className="text-sm font-medium truncate max-w-[100px]">
-                      {product.sous_categorie}
-                    </p>
-                  </div>
-                )}
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Prix</p>
+                  <p className="text-sm font-medium text-primary">
+                    {product.price > 0 ? `${product.price.toFixed(2)} GNF` : 'Non défini'}
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -616,8 +611,12 @@ const ProductsList = ({ products }: any) => {
               <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Produit
               </th>
+              
               <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Images
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Prix
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Catégorie
@@ -696,6 +695,13 @@ const ProductsList = ({ products }: any) => {
                       <span className="text-sm text-muted-foreground">-</span>
                     )}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {product.price > 0 ? (
+                      <span className="font-medium">{product.price.toFixed(2)} GNF</span>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
                     <Badge variant="secondary">{product.categorie}</Badge>
@@ -719,7 +725,6 @@ const ProductsList = ({ products }: any) => {
   );
 };
 
-// ==================== COMPOSANT PAGINATION ====================
 
 interface PaginationProps {
   currentPage: number;

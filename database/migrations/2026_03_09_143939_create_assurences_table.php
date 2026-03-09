@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\Pharmacie;
-use App\Models\Produit;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pharmacie_produits', function (Blueprint $table) {
+        Schema::create('assurences', function (Blueprint $table) {
             $table->id();
-                    $table->foreignIdFor(Produit::class)->constrained()->cascadeOnDelete();
-
-            $table->foreignIdFor(Pharmacie::class)->constrained()->cascadeOnDelete();
-           
+            $table->string('entreprise_name', 255);
+            $table->string('adresse', 255)->nullable();
+            $table->string('ville', 255)->nullable();
+            $table->string('telephone', 255)->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('phamacie_produits');
+        Schema::dropIfExists('assurences');
     }
 };

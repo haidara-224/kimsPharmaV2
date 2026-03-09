@@ -29,6 +29,7 @@ class ProduitaddRequest extends FormRequest
             'sous_categorie' => ['nullable', 'string', 'max:255'],
             'forme' => ['nullable', 'string', 'max:255'],
             'dosage' => ['nullable', 'string', 'max:255'],
+            'price' => ['nullable', 'integer', 'min:0'],
         ];
     }
 }

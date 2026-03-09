@@ -20,8 +20,8 @@ class Produit extends Model
     {
         return $this->belongsToMany(Ordonance::class,'searched_products', 'produit_id', 'ordonance_id');
     }
-    public function pharmacies():BelongsToMany
+   public function pharmacies()
     {
-        return $this->belongsToMany(Pharmacie::class);
+        return $this->belongsToMany(Pharmacie::class, 'pharmacie_produits', 'produit_id', 'pharmacie_id');
     }
 }

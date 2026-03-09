@@ -248,16 +248,17 @@ public function updateOrdonnanceStatus(Request $request)
 }
 public function produit()
 {
-    $produits = Produit::withCount('ordonances')
-        ->orderByDesc('created_at')
-        ->paginate(12)
-        ->through(function ($produit) {
-       
-            $produit->pharmacies_count = DB::table('phamacie_produits')
-                ->whereRaw('FIND_IN_SET(?, produit_id)', [(string) $produit->id])
-                ->count();
-            return $produit;
-        });
+$produits = Produit::withCount('ordonances')
+    ->orderByDesc('created_at')
+    ->paginate(12)
+    ->through(function ($produit) {
+    
+        $produit->pharmacies_count = DB::table('pharmacie_produits')
+            ->where('produit_id', $produit->id)
+            ->count();
+
+        return $produit;
+    });
 
     $stats = [
         'total'       => Produit::count(),
