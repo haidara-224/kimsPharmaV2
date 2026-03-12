@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
         });
 
         // 6️⃣ Assurances et membres
-        Assurence::factory()->count(20)->create();
+        Assurence::factory()->count(8)->create();
         Membre::factory()->count(100)->create();
 
         // 7️⃣ Produits disponibles dans les pharmacies

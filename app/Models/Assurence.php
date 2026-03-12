@@ -23,6 +23,6 @@ class Assurence extends Model
     ];
     public function membres()
     {
-        return $this->hasMany(membre::class); 
+        return $this->hasMany(Membre::class); 
     }
 }

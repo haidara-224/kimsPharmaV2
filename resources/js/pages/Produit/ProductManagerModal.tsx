@@ -55,14 +55,16 @@ interface ProductManagerModalProps {
   onOpenChange: (open: boolean) => void;
   products: Record<number, string>; 
   existingProducts: number[];
+    existingPrices: Record<number, number>
   pharmacieId: number;
 }
 
 export function ProductManagerModal({ 
-  open, 
+ open, 
   onOpenChange, 
   products, 
   existingProducts,
+  existingPrices,
   pharmacieId 
 }: ProductManagerModalProps) {
   const [activeTab, setActiveTab] = useState<'select' | 'create'>('select');
@@ -81,7 +83,7 @@ export function ProductManagerModal({
   const itemsPerPage = 12;
 
   // État pour les prix des produits sélectionnés
-  const [prices, setPrices] = useState<Record<number, number>>({});
+const [prices, setPrices] = useState<Record<number, number>>(existingPrices);
 
   // État pour le popup de prix
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);

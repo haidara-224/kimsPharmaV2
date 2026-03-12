@@ -148,6 +148,12 @@ export default function Index({ products, pharmacieProductsDetails }: IndexProps
   // IDs des produits existants
   const existingProducts = pharmacieProductsDetails.map(p => p.id);
 
+
+const existingPrices = pharmacieProductsDetails.reduce((acc: Record<number, number>, p) => {
+  acc[p.id] = p.price
+  return acc
+}, {})
+
   const stats = {
     totalProducts: pharmacieProductsDetails.length,
     categories: new Set(pharmacieProductsDetails.map(p => p.categorie)).size,
@@ -197,6 +203,7 @@ export default function Index({ products, pharmacieProductsDetails }: IndexProps
         onOpenChange={setIsModalOpen}
         products={products}
         existingProducts={existingProducts}
+          existingPrices={existingPrices}
         pharmacieId={pharmacieId}
       />
 

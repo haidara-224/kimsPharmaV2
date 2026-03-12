@@ -24,8 +24,8 @@ class MembreFactory extends Factory
             'name' => $this->faker->firstName(),
             'prenom' => $this->faker->lastName(),
             'telephone' => $this->faker->phoneNumber(),
-            'assurence_id' => Assurence::factory(),
-            'user_id' => User::factory(),
+            'assurence_id' => Assurence::inRandomOrder()->value('id'),
+        
         ];
     }
 }

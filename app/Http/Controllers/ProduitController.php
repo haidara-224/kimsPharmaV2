@@ -81,10 +81,20 @@ public function store(Request $request)
     $produitsIds = array_map('intval', (array) $request->input('products', []));
     $prices = $request->input('prices', []);
 
-    // Construire le tableau associatif pour sync
     $syncData = [];
+
     foreach ($produitsIds as $id) {
-        $syncData[$id] = ['price' => $prices[$id] ?? 0];
+
+        // récupérer ancien prix si le produit existe déjà
+        $existing = $pharmacie->produits()
+            ->where('produit_id', $id)
+            ->first();
+
+        $syncData[$id] = [
+            'price' => $prices[$id] 
+                ?? $existing?->pivot?->price 
+                ?? 0
+        ];
     }
 
     $pharmacie->produits()->sync($syncData);
