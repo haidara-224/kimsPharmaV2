@@ -137,7 +137,7 @@ export default function Index({
     })) || [];
 
     const recherchesChartData = searchedByMonth?.map((item) => ({
-        name: `${item.month.toString().padStart(2, '0')}/${item.year.toString().slice(-2)}`,
+        name: `${(item.month ?? 0).toString().padStart(2, '0')}/${(item.year ?? 0).toString().slice(-2)}`,
         recherches: item.total_recherches || 0,
         month: item.month,
         year: item.year,
